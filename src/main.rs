@@ -1,13 +1,14 @@
 #![no_std]
 #![no_main]
-pub mod gpio;
-pub mod macros;
-pub mod riscv;
-pub mod uart;
+mod gpio;
+mod hifive;
+mod macros;
+mod riscv;
+mod uart;
 
 use crate::gpio::*;
 use core::panic::PanicInfo;
-use core::ptr::write_volatile;
+use hifive::*;
 use uart::*;
 
 fn main_loop() {
@@ -16,28 +17,23 @@ fn main_loop() {
 
 #[no_mangle]
 pub fn _start() {
+    let mut gpio = GPIO::new(GPIO_ADDR);
     // Turn on the green led
     let enabled_leds = bit!(19);
-    unsafe {
-        write_volatile(GPIO_OUT_EN, enabled_leds);
-        write_volatile(GPIO_OUT_XOR, enabled_leds);
-        write_volatile(GPIO_OUT_VAL, enabled_leds);
-    }
+
+    gpio.set_output_enabled(enabled_leds);
 
     setup_clock();
     setup_uart0();
-    Writer::new().write_str("ñoño!");
+    Writer::new().write_str("Hello world!");
     main_loop();
 }
 
 #[panic_handler]
 fn panic(_er: &PanicInfo) -> ! {
+    let mut gpio = GPIO::new(GPIO_ADDR);
     // Turn on the red led
-    let enabled_leds = bit!(22);
-    unsafe {
-        write_volatile(GPIO_OUT_EN, enabled_leds);
-        write_volatile(GPIO_OUT_XOR, enabled_leds);
-        write_volatile(GPIO_OUT_VAL, enabled_leds);
-    }
+    gpio.set_output_enabled(bit!(22));
+    gpio.set_output_value(bit!(22));
     loop {}
 }

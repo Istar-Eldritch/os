@@ -1,5 +1,8 @@
+#![allow(dead_code)]
+
 use crate::bit;
 use crate::gpio::*;
+use crate::hifive::*;
 use core::ptr::{read_volatile, write_volatile};
 
 const UART0_ADDR: u32 = 0x10_013_000;
@@ -44,25 +47,30 @@ pub fn setup_clock() {
         //        break;
         //    }
         //}
-
-        let mask = !(0b11111 << 16 | 0b11111);
         //write_volatile((OTP_ADDR + OTP_A) as *mut u32, FAC_CAL_ADDR);
+        //let clock_calibration = read_volatile((OTP_ADDR + OTP_Q) as *mut u32);
+
+        // Marks all but the clock divider & calibration sections;
+        let mask = !(0b11111 << 16 | 0b11111);
+
+        // TODO: Calibration should be read from the OTP
         let clock_calibration = 0x24 << 16;
-        //read_volatile((OTP_ADDR + OTP_Q) as *mut u32);
+        let clock_divider = 0x4;
         write_volatile(
             PRCI_ADDR,
-            (read_volatile(PRCI_ADDR) & mask) | 0x4 | clock_calibration,
+            // Clears the clock divider and calibration sections and sets them
+            (read_volatile(PRCI_ADDR) & mask) | clock_divider | clock_calibration,
         );
     }
 }
 
 pub fn setup_uart0() {
-    unsafe {
-        // Enble UART GPIOs
-        write_volatile(GPIO_IOF_EN, UART0_PIN_TX | UART0_PIN_RX);
-        // Set pin in uart mode
-        write_volatile(GPIO_IOF_SEL, 0x0);
+    // Enble UART GPIOs
+    let mut gpio = GPIO::new(GPIO_ADDR);
+    gpio.set_iof_enabled(UART0_PIN_TX | UART0_PIN_RX);
+    gpio.set_iof_selection(0x0);
 
+    unsafe {
         // Enable UARTs
         write_volatile((UART0_ADDR + UART_TXCTRL) as *mut u32, 1);
         write_volatile((UART0_ADDR + UART_RXCTRL) as *mut u32, 1);
