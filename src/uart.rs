@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::bit;
-use crate::gpio::*;
+use crate::drivers::gpio::*;
 use crate::hifive::*;
 use core::ptr::{read_volatile, write_volatile};
 

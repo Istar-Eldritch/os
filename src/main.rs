@@ -1,13 +1,13 @@
 #![no_std]
 #![no_main]
-mod gpio;
+mod drivers;
 mod hifive;
 mod macros;
 mod riscv;
 mod uart;
 
-use crate::gpio::*;
 use core::panic::PanicInfo;
+use drivers::gpio::*;
 use hifive::*;
 use uart::*;
 
