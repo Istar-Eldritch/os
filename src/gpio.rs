@@ -1,0 +1,21 @@
+const GPIO_ADDR: u32 = 0x10_012_000;
+
+pub const GPIO_IN_VAL: *mut u32 = (GPIO_ADDR + 0x00) as *mut u32;
+pub const GPIO_IN_EN: *mut u32 = (GPIO_ADDR + 0x04) as *mut u32;
+pub const GPIO_OUT_EN: *mut u32 = (GPIO_ADDR + 0x08) as *mut u32;
+pub const GPIO_OUT_VAL: *mut u32 = (GPIO_ADDR + 0x0C) as *mut u32;
+pub const GPIO_PUE: *mut u32 = (GPIO_ADDR + 0x10) as *mut u32;
+pub const GPIO_DS: *mut u32 = (GPIO_ADDR + 0x14) as *mut u32;
+pub const GPIO_RISE_IE: *mut u32 = (GPIO_ADDR + 0x18) as *mut u32;
+pub const GPIO_RISE_IP: *mut u32 = (GPIO_ADDR + 0x1C) as *mut u32;
+pub const GPIO_FALL_IE: *mut u32 = (GPIO_ADDR + 0x20) as *mut u32;
+pub const GPIO_FALL_IP: *mut u32 = (GPIO_ADDR + 0x24) as *mut u32;
+pub const GPIO_HIGH_IE: *mut u32 = (GPIO_ADDR + 0x28) as *mut u32;
+pub const GPIO_HIGH_IP: *mut u32 = (GPIO_ADDR + 0x2C) as *mut u32;
+pub const GPIO_LOW_IE: *mut u32 = (GPIO_ADDR + 0x38) as *mut u32;
+pub const GPIO_LOW_IP: *mut u32 = (GPIO_ADDR + 0x34) as *mut u32;
+pub const GPIO_IOF_EN: *mut u32 = (GPIO_ADDR + 0x38) as *mut u32;
+pub const GPIO_IOF_SEL: *mut u32 = (GPIO_ADDR + 0x3C) as *mut u32;
+pub const GPIO_OUT_XOR: *mut u32 = (GPIO_ADDR + 0x40) as *mut u32;
+pub const GPIO_PASSTHRU_HIGH_IE: *mut u32 = (GPIO_ADDR + 0x44) as *mut u32;
+pub const GPIO_PASSTHRU_LOW_IE: *mut u32 = (GPIO_ADDR + 0x48) as *mut u32;
