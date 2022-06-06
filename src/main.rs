@@ -25,8 +25,8 @@ pub fn _start() {
     gpio.set_output_value(LED_GREEN);
 
     setup_clock();
-    setup_uart0();
-    Writer::new(UART0_ADDR).write_str("Hello world!");
+    let uart = setup_uart0();
+    Writer::new(uart).write_str("Hello world!");
     main_loop();
 }
 
@@ -46,6 +46,20 @@ pub fn setup_clock() {
             break;
         }
     }
+}
+
+pub fn setup_uart0() -> UART {
+    // Enble UART GPIOs
+    let mut gpio = GPIO::new(GPIO_ADDR);
+    gpio.set_iof_enabled(UART0_PIN_TX | UART0_PIN_RX);
+    gpio.set_iof_selection(0x0);
+
+    let mut uart = UART::new(UART0_ADDR);
+    uart.txctrl.set_txen(true);
+    uart.rxctrl.set_rxen(true);
+    // 115200 Baud from  a 14.4MHz clock
+    uart.div.set_div(0x7c);
+    uart
 }
 
 #[panic_handler]
