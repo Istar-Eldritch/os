@@ -1,10 +1,12 @@
 #![no_std]
 #![no_main]
+
 mod drivers;
 mod hifive;
 mod macros;
 mod riscv;
 mod term;
+mod register;
 
 use core::panic::PanicInfo;
 use drivers::gpio::*;
@@ -21,13 +23,14 @@ fn main_loop() {
 pub fn _start() {
     let mut gpio = GPIO::new(GPIO_ADDR);
     // Turn on the green led
-    gpio.set_output_en(LED_GREEN);
-    gpio.set_out_xor(LED_GREEN);
-    gpio.set_output_val(LED_GREEN);
+    gpio.set_output_en(LED_GREEN | LED_RED | LED_BLUE);
+    gpio.set_out_xor(LED_GREEN | LED_RED | LED_BLUE);
 
     setup_clock();
     let uart = setup_uart0();
     Writer::new(uart).write_str("Hello world!");
+
+    gpio.set_output_val(LED_GREEN);
     main_loop();
 }
 
@@ -67,7 +70,6 @@ pub fn setup_uart0() -> UART {
 fn panic(_er: &PanicInfo) -> ! {
     let mut gpio = GPIO::new(GPIO_ADDR);
     // Turn on the red led
-    gpio.set_output_en(LED_RED);
     gpio.set_output_val(LED_RED);
     loop {}
 }
