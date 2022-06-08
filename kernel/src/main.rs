@@ -20,16 +20,18 @@ fn main_loop() {
 
 #[no_mangle]
 pub fn _start() {
-    let mut gpio = GPIO::new(GPIO_ADDR);
-    // Turn on the green led
-    gpio.set_output_en(LED_GREEN | LED_RED | LED_BLUE);
-    gpio.set_out_xor(LED_GREEN | LED_RED | LED_BLUE);
+    let gpio = GPIO::new(GPIO_ADDR);
+
+    // Enable the leds
+    gpio.output_en().set_all(LED_GREEN | LED_RED | LED_BLUE);
+    gpio.out_xor().set_all(LED_GREEN | LED_RED | LED_BLUE);
 
     setup_clock();
     let uart = setup_uart0();
     Writer::new(uart).write_str("Hello world!");
+    // Turnon the green led
+    gpio.output_val().set_pin19(1);
 
-    gpio.set_output_val(LED_GREEN);
     main_loop();
 }
 
@@ -53,9 +55,9 @@ pub fn setup_clock() {
 
 pub fn setup_uart0() -> UART {
     // Enble UART GPIOs
-    let mut gpio = GPIO::new(GPIO_ADDR);
-    gpio.set_iof_en(UART0_PIN_RX | UART0_PIN_TX);
-    gpio.set_iof_sel(0x0);
+    let gpio = GPIO::new(GPIO_ADDR);
+    gpio.iof_en().set_all(UART0_PIN_RX | UART0_PIN_TX);
+    gpio.iof_sel().set_all(0x0);
 
     let mut uart = UART::new(UART0_ADDR);
     uart.txctrl.set_txen(true);
@@ -67,8 +69,8 @@ pub fn setup_uart0() -> UART {
 
 #[panic_handler]
 fn panic(_er: &PanicInfo) -> ! {
-    let mut gpio = GPIO::new(GPIO_ADDR);
+    let gpio = GPIO::new(GPIO_ADDR);
     // Turn on the red led
-    gpio.set_output_val(LED_RED);
+    gpio.output_val().set_pin22(1);
     loop {}
 }

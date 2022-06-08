@@ -4,19 +4,19 @@
 ///
 use crate::bit;
 
-pub const GPIO_ADDR: *mut u32 = 0x10_012_000 as *mut u32;
+pub const GPIO_ADDR: *mut usize = 0x10_012_000 as *mut usize;
 
-pub const LED_RED: u32 = bit!(22);
-pub const LED_GREEN: u32 = bit!(19);
-pub const LED_BLUE: u32 = bit!(21);
+pub const LED_RED: usize = bit!(22);
+pub const LED_GREEN: usize = bit!(19);
+pub const LED_BLUE: usize = bit!(21);
 
 pub const UART0_ADDR: *mut u32 = 0x10_013_000 as *mut u32;
-pub const UART0_PIN_RX: u32 = bit!(16);
-pub const UART0_PIN_TX: u32 = bit!(17);
+pub const UART0_PIN_RX: usize = bit!(16);
+pub const UART0_PIN_TX: usize = bit!(17);
 
 pub const UART1_ADDR: *mut u32 = 0x10_023_000 as *mut u32;
-pub const UART1_PIN_RX: u32 = bit!(18);
-pub const UART1_PIN_TX: u32 = bit!(23);
+pub const UART1_PIN_RX: usize = bit!(18);
+pub const UART1_PIN_TX: usize = bit!(23);
 
 // TIMER STUFF
 // TODO: Link docs

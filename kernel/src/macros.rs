@@ -3,6 +3,6 @@
 #[macro_export]
 macro_rules! bit {
     ( $($x:expr ), * ) => {
-        $((2 as u32).pow($x))*
+        $((2 as usize).pow($x))*
     };
 }
