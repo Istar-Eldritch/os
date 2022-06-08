@@ -1,16 +1,16 @@
 #[cfg(test)]
-mod test {
+mod tests {
     use register::*;
 
     #[field(all, 0, 31)]
     #[field(first_byte, 0, 7)]
     #[field(fifth_bit, 5, 5)]
-    struct BitField(*mut u32);
-
+    struct BitField(*mut usize);
+    
     #[test]
     fn all_bits() {
-        let mut i: u32 = 1000;
-        let i_ptr: *mut u32 = &mut i;
+        let mut i: usize = 1000;
+        let i_ptr: *mut usize = &mut i;
 
         let mut bf = BitField(i_ptr);
 
@@ -25,9 +25,9 @@ mod test {
 
     #[test]
     fn parts() {
-        let mut i: u32 = 0xFFFF;
+        let mut i: usize = 0xFFFF;
 
-        let i_ptr: *mut u32 = &mut i;
+        let i_ptr: *mut usize = &mut i;
 
         let mut bf = BitField(i_ptr);
 
@@ -48,9 +48,9 @@ mod test {
 
     #[test]
     fn single_bit() {
-        let mut i: u32 = 0;
+        let mut i: usize = 0;
 
-        let i_ptr: *mut u32 = &mut i;
+        let i_ptr: *mut usize = &mut i;
 
         let mut bf = BitField(i_ptr);
 
@@ -68,4 +68,28 @@ mod test {
         assert_eq!(bf.all(), 1 << 5);
     }
 
+
+    #[field(all, 0, 31)]
+    struct TestRegister(*mut usize);
+    
+    #[register(a, TestRegister, 0x0)]
+    #[register(b, TestRegister, 0x8)]
+    struct TestDevice(*mut usize);   
+
+    #[test]
+    fn describes_a_register() {
+        
+        let mut var = Box::new((1,2));
+        let mut ptr: *mut usize = &mut var.0;
+        let mut ptr1: *mut usize = &mut var.1;
+ 
+        let device = TestDevice(ptr);
+
+        assert_eq!(device.a().all(), 1);       
+        assert_eq!(device.b().all(), 2);
+        device.a().set_all(3);
+        device.b().set_all(4);
+        assert_eq!(*var, (3, 4));
+    }
 }
+
