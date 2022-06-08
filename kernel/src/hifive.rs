@@ -20,7 +20,7 @@ pub const UART1_PIN_TX: usize = bit!(23);
 
 // TIMER STUFF
 // TODO: Link docs
-pub const PRCI_ADDR: *mut u32 = 0x10_008_000 as *mut u32;
+pub const PRCI_ADDR: *mut usize = 0x10_008_000 as *mut usize;
 
 // OTP SUFF
 pub const OTP_ADDR: u32 = 0x20000;

@@ -36,18 +36,18 @@ pub fn _start() {
 }
 
 pub fn setup_clock() {
-    let mut prci = PRCI::new(PRCI_ADDR);
+    let prci = PRCI::new(PRCI_ADDR);
 
     // Divider for 14.4MHz
-    prci.hfrosccfg.set_hfroscdiv(0x4);
+    prci.hfrosccfg().set_hfroscdiv(0x4);
 
     // TODO: Calibration should be read from the OTP
     // TODO: Test this with an oscilloscope
     // This calibration was done by trial and error
-    prci.hfrosccfg.set_hfrosctrim(0x24);
+    prci.hfrosccfg().set_hfrosctrim(0x24);
     // Wait for the clock to be ready
     loop {
-        if prci.hfrosccfg.hfroscrdy() {
+        if prci.hfrosccfg().hfroscrdy() == 1 {
             break;
         }
     }

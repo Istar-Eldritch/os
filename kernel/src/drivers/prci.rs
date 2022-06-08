@@ -1,141 +1,76 @@
 #![allow(dead_code)]
 
-use core::ptr::{read_volatile, write_volatile};
+use register::*;
 
-pub struct PRCI {
-    pub hfrosccfg: HFROSCCFG,
-    pub hfxosccfg: HFXOSCCFG,
-    pub pllcfg: PLLCFG,
-    pub plloutdiv: PLLOUTDIV,
-    pub procmoncfg: PROCMONCFG,
-}
+#[register(hfrosccfg, HFROSCCFG, 0x0)]
+#[register(hfxosccfg, HFXOSCCFG, 0x4)]
+#[register(pllcfg, PLLCFG, 0x8)]
+#[register(plloutdiv, PLLOUTDIV, 0xC)]
+#[register(procmoncfg, PROCMONCFG, 0xF0)]
+pub struct PRCI(*mut usize);
 
 impl PRCI {
-    pub fn new(addr: *mut u32) -> Self {
-        PRCI {
-            hfrosccfg: HFROSCCFG::new(addr),
-            hfxosccfg: HFXOSCCFG::new((addr as u32 + 0x04) as *mut u32),
-            pllcfg: PLLCFG::new((addr as u32 + 0x08) as *mut u32),
-            plloutdiv: PLLOUTDIV::new((addr as u32 + 0x0C) as *mut u32),
-            procmoncfg: PROCMONCFG::new((addr as u32 + 0xF0) as *mut u32),
-        }
+    pub fn new(addr: *mut usize) -> Self {
+        PRCI(addr)
     }
 }
 
-/// hfrosccfg: Ring Oscillator Configuration and Status
-pub struct HFROSCCFG {
-    ptr: *mut u32,
-}
+/// Internal Trimmable Programmable 72 MHz Oscillator (HFROSC)
+#[field(hfroscdiv, 0, 5)]
+#[field(hfrosctrim, 16, 20)]
+#[field(hfroscen, 30, 30)]
+#[field(hfroscrdy, 31, 31)]
+pub struct HFROSCCFG(*mut usize);
 
 impl HFROSCCFG {
-    const HFROSCDIV_MASK: u32 = 0b11111;
-    const HFROSCTRIM_SHIFT: u32 = 16;
-    const HFROSCTRIM_MASK: u32 = 0b11111 << Self::HFROSCTRIM_SHIFT;
-    const HFROSCEN_SHIFT: u32 = 30;
-
-    pub fn new(ptr: *mut u32) -> Self {
-        HFROSCCFG { ptr }
-    }
-
-    /// Ring Oscillator Divider Register
-    pub fn hfroscdiv(&self) -> u32 {
-        unsafe { read_volatile(self.ptr) & Self::HFROSCDIV_MASK }
-    }
-
-    pub fn set_hfroscdiv(&mut self, value: u32) {
-        unsafe {
-            let original = read_volatile(self.ptr) & !Self::HFROSCDIV_MASK;
-            write_volatile(self.ptr, original | value);
-        }
-    }
-
-    /// Ring Oscillator Trim Register
-    pub fn hfrosctrim(&self) -> u32 {
-        unsafe {
-            let value = read_volatile(self.ptr) & Self::HFROSCTRIM_MASK;
-            value >> Self::HFROSCTRIM_SHIFT
-        }
-    }
-
-    pub fn set_hfrosctrim(&mut self, value: u32) {
-        unsafe {
-            let original = read_volatile(self.ptr) & !Self::HFROSCTRIM_MASK;
-            write_volatile(self.ptr, original | (value << Self::HFROSCTRIM_SHIFT));
-        }
-    }
-
-    /// Ring Oscillator Enable
-    pub fn hfroscen(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & (1 << Self::HFROSCEN_SHIFT) != 0 }
-    }
-
-    pub fn set_hfroscen(&mut self, value: bool) {
-        let value = if value { 1 << Self::HFROSCEN_SHIFT } else { 0 };
-        unsafe {
-            let original = read_volatile(self.ptr);
-            write_volatile(self.ptr, original | value);
-        }
-    }
-
-    /// Ring Oscillator Ready
-    pub fn hfroscrdy(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & (1 << 31) != 0 }
+    pub fn new(ptr: *mut usize) -> Self {
+        HFROSCCFG(ptr)
     }
 }
 
-/// hfxosccfg Crystal Oscillator Configuration and Status
-pub struct HFXOSCCFG {
-    ptr: *mut u32,
-}
+/// External 16 MHz Crystal Oscillator (HFXOSC)
+#[field(hfxoscen, 30, 30)]
+#[field(hfxoscrdy, 31, 31)]
+pub struct HFXOSCCFG(*mut usize);
 
 impl HFXOSCCFG {
-    pub fn new(ptr: *mut u32) -> Self {
-        HFXOSCCFG { ptr }
-    }
-
-    pub fn hfxoscen(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & (1 << 30) != 0 }
-    }
-
-    pub fn set_hfxoscen(&mut self, value: bool) {
-        let value = if value { 1 << 30 } else { 0 };
-        unsafe {
-            let original = read_volatile(self.ptr);
-            write_volatile(self.ptr, original | value);
-        }
-    }
-
-    pub fn hfroscen(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & (1 << 31) != 0 }
+    pub fn new(ptr: *mut usize) -> Self {
+        HFXOSCCFG(ptr)
     }
 }
 
-pub struct PLLCFG {
-    ptr: *mut u32,
-}
+/// Internal High-Frequency PLL (HFPLL)
+#[field(pllr, 0, 2)]
+#[field(pllf, 4, 9)]
+#[field(pllq, 10, 11)]
+#[field(pllsel, 16, 16)]
+#[field(pllrefsel, 17, 17)]
+#[field(pllbypass, 18, 18)]
+#[field(plllock, 31, 31)]
+pub struct PLLCFG(*mut usize);
 
 impl PLLCFG {
-    pub fn new(ptr: *mut u32) -> Self {
-        PLLCFG { ptr }
+    pub fn new(ptr: *mut usize) -> Self {
+        PLLCFG(ptr)
     }
 }
 
-pub struct PLLOUTDIV {
-    ptr: *mut u32,
-}
+/// PLL Output Divider
+#[field(plloutdiv, 0, 5)]
+#[field(plloutdivby1, 8, 8)]
+pub struct PLLOUTDIV(*mut usize);
 
 impl PLLOUTDIV {
-    pub fn new(ptr: *mut u32) -> Self {
-        PLLOUTDIV { ptr }
+    pub fn new(ptr: *mut usize) -> Self {
+        PLLOUTDIV(ptr)
     }
 }
 
-pub struct PROCMONCFG {
-    ptr: *mut u32,
-}
+#[field(all, 0, 31)]
+pub struct PROCMONCFG(*mut usize);
 
 impl PROCMONCFG {
-    pub fn new(ptr: *mut u32) -> Self {
-        PROCMONCFG { ptr }
+    pub fn new(ptr: *mut usize) -> Self {
+        PROCMONCFG(ptr)
     }
 }
