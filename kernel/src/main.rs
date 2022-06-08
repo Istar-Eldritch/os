@@ -6,7 +6,6 @@ mod hifive;
 mod macros;
 mod riscv;
 mod term;
-mod register;
 
 use core::panic::PanicInfo;
 use drivers::gpio::*;

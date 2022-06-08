@@ -1,5 +1,5 @@
 [package]
-name = "os"
+name = "kernel"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,3 +7,7 @@ edition = "2021"
 
 [dependencies]
 riscv-rt = "0.8.1"
+
+[dependencies.register]
+version = "0.1.0"
+path = "../register"
