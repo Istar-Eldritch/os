@@ -59,11 +59,11 @@ pub fn setup_uart0() -> UART {
     gpio.iof_en().set_all(UART0_PIN_RX | UART0_PIN_TX);
     gpio.iof_sel().set_all(0x0);
 
-    let mut uart = UART::new(UART0_ADDR);
-    uart.txctrl.set_txen(true);
-    uart.rxctrl.set_rxen(true);
+    let uart = UART::new(UART0_ADDR);
+    uart.txctrl().set_txen(1);
+    uart.rxctrl().set_rxen(1);
     // 115200 Baud from  a 14.4MHz clock
-    uart.div.set_div(0x7c);
+    uart.div().set_div(0x7c);
     uart
 }
 

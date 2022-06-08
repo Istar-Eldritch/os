@@ -1,234 +1,76 @@
-#![allow(dead_code)]
+use register::*;
 
-use core::ptr::{read_volatile, write_volatile};
-
-pub struct UART {
-    pub txdata: TXDATA,
-    pub rxdata: RXDATA,
-    pub txctrl: TXCTRL,
-    pub rxctrl: RXCTRL,
-    pub ie: IE,
-    pub ip: IP,
-    pub div: DIV,
-}
+#[register(txdata, TXDATA, 0x0)]
+#[register(rxdata, RXDATA, 0x4)]
+#[register(txctrl, TXCTRL, 0x08)]
+#[register(rxctrl, RXCTRL, 0x0C)]
+#[register(ie, InterruptRegister, 0x10)]
+#[register(ip, InterruptRegister, 0x14)]
+#[register(div, DIV, 0x18)]
+pub struct UART(*mut usize);
 
 impl UART {
-    pub fn new(addr: *mut u32) -> Self {
-        UART {
-            txdata: TXDATA { ptr: addr },
-            rxdata: RXDATA {
-                ptr: (addr as u32 + 0x04) as *mut u32,
-            },
-            txctrl: TXCTRL {
-                ptr: (addr as u32 + 0x08) as *mut u32,
-            },
-            rxctrl: RXCTRL {
-                ptr: (addr as u32 + 0x0C) as *mut u32,
-            },
-            ie: IE {
-                ptr: (addr as u32 + 0x10) as *mut u32,
-            },
-            ip: IP {
-                ptr: (addr as u32 + 0x14) as *mut u32,
-            },
-            div: DIV {
-                ptr: (addr as u32 + 0x18) as *mut u32,
-            },
-        }
+    pub fn new(addr: *mut usize) -> Self {
+        UART(addr)
     }
 }
 
-pub struct TXDATA {
-    ptr: *mut u32,
-}
+#[field(data, 0, 7)]
+#[field(full, 31, 31)]
+pub struct TXDATA(*mut usize);
 
 impl TXDATA {
-    pub fn new(ptr: *mut u32) -> Self {
-        TXDATA { ptr }
-    }
-
-    /// Transmit data
-    pub fn data(&self) -> u8 {
-        let value = unsafe { read_volatile(self.ptr) & 0xFF };
-        value as u8
-    }
-
-    pub fn set_data(&mut self, value: u8) {
-        unsafe { write_volatile(self.ptr, value as u32) }
-    }
-
-    /// Transmit FIFO full
-    pub fn full(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & (1 << 31) != 0 }
+    pub fn new(ptr: *mut usize) -> Self {
+        TXDATA(ptr)
     }
 }
 
-pub struct RXDATA {
-    ptr: *mut u32,
-}
+#[field(data, 0, 7)]
+#[field[empty, 31, 31]]
+pub struct RXDATA(*mut usize);
 
 impl RXDATA {
-    pub fn new(ptr: *mut u32) -> Self {
-        RXDATA { ptr }
-    }
-
-    /// Received data
-    pub fn data(&self) -> u8 {
-        let value = unsafe { read_volatile(self.ptr) & 0xF };
-        u8::try_from(value).unwrap()
-    }
-
-    /// Receive FIFO empty
-    pub fn empty(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & (1 << 31) != 1 }
+    pub fn new(ptr: *mut usize) -> Self {
+        RXDATA(ptr)
     }
 }
 
-pub struct TXCTRL {
-    ptr: *mut u32,
-}
+#[field(txen, 0, 0)]
+#[field(nxtop, 1, 1)]
+#[field(txcnt, 16, 18)]
+pub struct TXCTRL(*mut usize);
 
 impl TXCTRL {
-    pub fn new(ptr: *mut u32) -> Self {
-        TXCTRL { ptr }
-    }
-
-    /// Transmit enable
-    pub fn txen(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & 0x1 != 0 }
-    }
-
-    pub fn set_txen(&mut self, value: bool) {
-        let value = if value { 1 } else { 0 };
-        unsafe { write_volatile(self.ptr, !(read_volatile(self.ptr) & 0x1) | value) }
-    }
-
-    pub fn nstop(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & (0x1 << 1) != 0 }
-    }
-
-    pub fn set_nstop(&mut self, value: bool) {
-        let value = if value { 1 << 1 } else { 0 };
-        unsafe {
-            write_volatile(
-                self.ptr,
-                (read_volatile(self.ptr) & !(0x1 << 1)) | (value << 1),
-            )
-        }
-    }
-
-    pub fn txcnt(&self) -> u8 {
-        let val = unsafe { read_volatile(self.ptr) & (0b11 << 16) };
-        (val >> 16) as u8
-    }
-
-    pub fn set_txcnt(&mut self, value: u8) {
-        unsafe {
-            write_volatile(
-                self.ptr,
-                (read_volatile(self.ptr) & !(0b11 << 16)) | (value as u32) << 16,
-            )
-        }
+    pub fn new(ptr: *mut usize) -> Self {
+        TXCTRL(ptr)
     }
 }
 
-pub struct RXCTRL {
-    ptr: *mut u32,
-}
+#[field(rxen, 0, 0)]
+#[field(rxcnt, 16, 18)]
+pub struct RXCTRL(*mut usize);
 
 impl RXCTRL {
-    pub fn new(ptr: *mut u32) -> Self {
-        RXCTRL { ptr }
-    }
-
-    pub fn rxen(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & 0x1 != 0 }
-    }
-
-    pub fn set_rxen(&mut self, value: bool) {
-        let value = if value { 1 } else { 0 };
-        unsafe { write_volatile(self.ptr, !(read_volatile(self.ptr) & 0x1) | value) }
-    }
-
-    pub fn rxcnt(&self) -> u8 {
-        let val = unsafe { read_volatile(self.ptr) & (0b11 << 16) };
-        (val >> 16) as u8
-    }
-
-    pub fn set_rxcnt(&mut self, value: u8) {
-        unsafe {
-            write_volatile(
-                self.ptr,
-                (read_volatile(self.ptr) & !(0b11 << 16)) | (value as u32) << 16,
-            )
-        }
+    pub fn new(ptr: *mut usize) -> Self {
+        RXCTRL(ptr)
     }
 }
 
-pub struct IE {
-    ptr: *mut u32,
-}
+#[field(txwm, 0, 0)]
+#[field(rxwm, 1, 1)]
+pub struct InterruptRegister(*mut usize);
 
-impl IE {
-    pub fn new(ptr: *mut u32) -> Self {
-        IE { ptr }
-    }
-
-    pub fn txwm(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & 0x1 != 0 }
-    }
-
-    pub fn set_txwm(&mut self, value: bool) {
-        let value = if value { 1 } else { 0 };
-        unsafe { write_volatile(self.ptr, !(read_volatile(self.ptr) & 0x1) | value) }
-    }
-
-    pub fn rxwm(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & (0x1 << 1) != 0 }
-    }
-
-    pub fn set_rxwm(&mut self, value: bool) {
-        let value = if value { 1 } else { 0 };
-        unsafe { write_volatile(self.ptr, !(read_volatile(self.ptr) & (0x1 << 1)) | value) }
+impl InterruptRegister {
+    pub fn new(ptr: *mut usize) -> Self {
+        InterruptRegister(ptr)
     }
 }
 
-pub struct IP {
-    ptr: *mut u32,
-}
-
-impl IP {
-    pub fn new(ptr: *mut u32) -> Self {
-        IP { ptr }
-    }
-
-    pub fn txwm(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & 0x1 != 0 }
-    }
-
-    pub fn rxwm(&self) -> bool {
-        unsafe { read_volatile(self.ptr) & (0x1 << 1) != 0 }
-    }
-}
-
-pub struct DIV {
-    ptr: *mut u32,
-}
+#[field(div, 0, 15)]
+pub struct DIV(*mut usize);
 
 impl DIV {
-    pub fn new(ptr: *mut u32) -> Self {
-        DIV { ptr }
-    }
-
-    pub fn div(&self) -> u16 {
-        let val = unsafe { read_volatile(self.ptr) & 0xFFFF };
-        val as u16
-    }
-
-    pub fn set_div(&self, value: u16) {
-        unsafe {
-            let original = read_volatile(self.ptr) & !0xFFFF;
-            write_volatile(self.ptr, original | value as u32)
-        }
+    pub fn new(ptr: *mut usize) -> Self {
+        DIV(ptr)
     }
 }

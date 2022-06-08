@@ -10,11 +10,11 @@ impl Writer {
     }
     pub fn write_char(&mut self, c: u8) {
         loop {
-            if !self.uart.txdata.full() {
+            if self.uart.txdata().full() == 0 {
                 break;
             }
         }
-        self.uart.txdata.set_data(c);
+        self.uart.txdata().set_data(c as usize);
     }
 
     pub fn write_str(&mut self, s: &str) {
