@@ -1,9 +1,11 @@
+#![allow(dead_code)]
 use core::arch::asm;
 
 #[naked]
 #[no_mangle]
 #[cfg(any(target_arch = "riscv32", target_arch = "riscv64"))]
-pub extern "C" fn _start() -> ! {
+#[link_section = ".init"]
+pub extern "C" fn _init() -> ! {
     unsafe {
         asm!(
             "
@@ -48,7 +50,7 @@ pub extern "C" fn _start() -> ! {
             
                 la t0, _start_trap
                 csrw mtvec, t0
-                jal zero, main
+                jal zero, _start
     ",
             options(noreturn)
         )
@@ -58,6 +60,7 @@ pub extern "C" fn _start() -> ! {
 #[naked]
 #[no_mangle]
 #[cfg(target_arch = "riscv32")]
+#[link_section = ".trap"]
 pub extern "C" fn _start_trap() -> ! {
     unsafe {
         asm!(

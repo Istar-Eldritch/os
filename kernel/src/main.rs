@@ -1,27 +1,27 @@
 #![no_std]
 #![no_main]
 #![feature(naked_functions)]
+#![feature(const_mut_refs)]
 
 mod drivers;
 mod hifive;
+mod low;
 mod macros;
 mod riscv;
 mod term;
-mod low;
 
+use core::fmt::Write;
 use core::panic::PanicInfo;
+use drivers::clint::*;
 use drivers::gpio::*;
 use drivers::prci::*;
 use drivers::uart::*;
 use hifive::*;
+use riscv::{wfi, MCause, MStatus, Mie};
 use term::Writer;
 
-fn main_loop() {
-    loop {}
-}
-
 #[no_mangle]
-pub fn main() {
+pub fn _start() {
     let gpio = GPIO::new(GPIO_ADDR);
 
     // Enable the leds
@@ -29,24 +29,59 @@ pub fn main() {
     gpio.out_xor().set_all(LED_GREEN | LED_RED | LED_BLUE);
 
     setup_clock();
+    let prci = PRCI::new(PRCI_ADDR);
     let uart = setup_uart0();
-    Writer::new(uart).write_str("Hello world!");
-    // Turnon the green led
+    let mut writer = Writer::new(uart);
+
+    writeln!(writer, "Hfrosc enabled: {}", prci.hfrosccfg().hfroscen()).unwrap();
+    enable_interrupts();
+
+    // Turn on the green led
     gpio.output_val().set_pin19(1);
 
-    main_loop();
+    loop {
+        let time: u64 = Clint::new(CLINT_ADDR).mtime().get_time();
+        writeln!(writer, "Time @ {}", time).unwrap();
+
+        wfi();
+        writer.write_str("Looping!\n");
+    }
+}
+
+pub fn enable_interrupts() {
+    let uart = setup_uart0();
+    let mut writer = Writer::new(uart);
+
+    writeln!(writer, "Enabling interrupts").unwrap();
+    let mut mstatus = MStatus::new();
+    let mut mie = Mie::new();
+
+    mie.set_mtie(1);
+    mstatus.set_mie(1);
+
+    mie.apply();
+    mstatus.apply();
+
+    let clint = Clint::new(CLINT_ADDR);
+
+    writeln!(
+        writer,
+        "status_mie: {:b} -- mie_mtie: {:b}",
+        mstatus.mie(),
+        mie.mtie()
+    )
+    .unwrap();
+
+    // Triggers an intterupt inmediatly
+    clint.mtimecmp().set_time(0);
+    writeln!(writer, "Interrupts enabled").unwrap();
 }
 
 pub fn setup_clock() {
     let prci = PRCI::new(PRCI_ADDR);
+    // Set frequency to 2.0736MHz
+    prci.hfrosccfg().set_freq(2_073_600);
 
-    // Divider for 14.4MHz
-    prci.hfrosccfg().set_hfroscdiv(0x4);
-
-    // TODO: Calibration should be read from the OTP
-    // TODO: Test this with an oscilloscope
-    // This calibration was done by trial and error
-    prci.hfrosccfg().set_hfrosctrim(0x24);
     // Wait for the clock to be ready
     loop {
         if prci.hfrosccfg().hfroscrdy() == 1 {
@@ -64,8 +99,8 @@ pub fn setup_uart0() -> UART {
     let uart = UART::new(UART0_ADDR);
     uart.txctrl().set_txen(1);
     uart.rxctrl().set_rxen(1);
-    // 115200 Baud from  a 14.4MHz clock
-    uart.div().set_div(0x7c);
+    // 115200 Baud from  a 2.0736MHz clock
+    uart.div().set_div(2_073_600 / 115200 - 1);
     uart
 }
 
@@ -78,4 +113,39 @@ fn panic(_er: &PanicInfo) -> ! {
 }
 
 #[no_mangle]
-pub fn trap_handler() {}
+pub fn trap_handler() {
+    let mcause = MCause::new();
+    let uart = UART::new(UART0_ADDR);
+    let mut writer = Writer::new(uart);
+    let clint = Clint::new(CLINT_ADDR);
+    let time: u64 = clint.mtime().get_time();
+
+    // Timer Interrupt
+    if mcause.code() as u32 == 7 {
+        // Trigger an interrupt in 1s if the clock runs at 32.768KHz
+        // For some reason looks like this is using the AON block low freq clock, I still don't understand why its not using hf clock.
+        // TODO: What clock is actually running the CPU?
+        clint.mtimecmp().set_time(time + 32_768);
+        return;
+    }
+
+    // HALT on Exceptions
+    if mcause.interrupt() == 0 {
+        // Turn on the red led
+        let gpio = GPIO::new(GPIO_ADDR);
+        gpio.output_val().set_all(0 | LED_RED);
+        writeln!(writer, "HALTED!").unwrap();
+        // TODO HALT / Recover
+        loop {}
+    }
+
+    writeln!(
+        writer,
+        "time: {} - interrupt: {:b} - code: {} - all: {:b}",
+        time,
+        mcause.interrupt(),
+        mcause.code(),
+        mcause.all()
+    )
+    .unwrap();
+}

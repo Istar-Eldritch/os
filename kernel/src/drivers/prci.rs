@@ -23,8 +23,20 @@ impl PRCI {
 pub struct HFROSCCFG(*mut usize);
 
 impl HFROSCCFG {
+    const FREQ: u32 = 72_000_000;
+
     pub fn new(ptr: *mut usize) -> Self {
         HFROSCCFG(ptr)
+    }
+
+    pub fn set_freq(&mut self, freq: u32) {
+        let div = HFROSCCFG::FREQ / freq;
+
+        // TODO: Calibration should be read from the OTP
+        // TODO: Test this with an oscilloscope
+        // This calibration was done by trial and error
+        self.set_hfrosctrim(4);
+        self.set_hfroscdiv((div - 1) as usize);
     }
 }
 

@@ -10,9 +10,10 @@ MEMORY
 
 SECTIONS
 {
-
+  .init : { *(.init) } > FLASH
+  .trap : ALIGN(4) { *(.trap) } > FLASH
   .text : { *(.text) } > FLASH
-  .data : { *(.data)  } > FLASH
+  .bss : { *(.data)  } > RAM
   .rodata : { *(.rodata)  } > FLASH
 }
 
