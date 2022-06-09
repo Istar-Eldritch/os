@@ -1,4 +1,5 @@
 use crate::drivers::uart::*;
+use core::fmt;
 
 pub struct Writer {
     uart: UART,
@@ -21,5 +22,12 @@ impl Writer {
         for byte in s.bytes() {
             self.write_char(byte);
         }
+    }
+}
+
+impl fmt::Write for Writer {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        self.write_str(s);
+        Ok(())
     }
 }

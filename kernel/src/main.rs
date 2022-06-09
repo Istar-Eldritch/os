@@ -4,21 +4,19 @@
 
 mod drivers;
 mod hifive;
+mod low;
 mod macros;
 mod riscv;
 mod term;
-mod low;
 
+use core::fmt::Write;
 use core::panic::PanicInfo;
 use drivers::gpio::*;
 use drivers::prci::*;
 use drivers::uart::*;
 use hifive::*;
+use riscv::{wfi, MStatus, Mie};
 use term::Writer;
-
-fn main_loop() {
-    loop {}
-}
 
 #[no_mangle]
 pub fn main() {
@@ -30,11 +28,20 @@ pub fn main() {
 
     setup_clock();
     let uart = setup_uart0();
-    Writer::new(uart).write_str("Hello world!");
+    let mut writer = Writer::new(uart);
+
+    writer.write_str("Hello world!");
     // Turnon the green led
+
+    //let mstatus = MStatus::read();
+    //let value = mstatus.all();
+     write!(writer, "mstatus").unwrap_or(());
     gpio.output_val().set_pin19(1);
 
-    main_loop();
+    loop {
+        writer.write_str("Looping!");
+        wfi();
+    }
 }
 
 pub fn setup_clock() {
@@ -78,4 +85,10 @@ fn panic(_er: &PanicInfo) -> ! {
 }
 
 #[no_mangle]
-pub fn trap_handler() {}
+pub fn trap_handler() {
+    let uart = UART::new(UART0_ADDR);
+    let gpio = GPIO::new(GPIO_ADDR);
+    // Turn on the red led
+    gpio.output_val().set_pin22(1);
+    Writer::new(uart).write_str("Interrupted!");
+}
