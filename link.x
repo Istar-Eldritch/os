@@ -1,6 +1,5 @@
 OUTPUT_ARCH(riscv)
 
-
 ENTRY(_start)
 
 MEMORY
@@ -11,8 +10,11 @@ MEMORY
 
 SECTIONS
 {
+
   .text : { *(.text) } > FLASH
   .data : { *(.data)  } > FLASH
   .rodata : { *(.rodata)  } > FLASH
 }
 
+PROVIDE(_hart_stack_size = 2K);
+PROVIDE(_stack_start = ORIGIN(RAM) + LENGTH(RAM));

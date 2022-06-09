@@ -1,11 +1,13 @@
 #![no_std]
 #![no_main]
+#![feature(naked_functions)]
 
 mod drivers;
 mod hifive;
 mod macros;
 mod riscv;
 mod term;
+mod low;
 
 use core::panic::PanicInfo;
 use drivers::gpio::*;
@@ -19,7 +21,7 @@ fn main_loop() {
 }
 
 #[no_mangle]
-pub fn _start() {
+pub fn main() {
     let gpio = GPIO::new(GPIO_ADDR);
 
     // Enable the leds
@@ -74,3 +76,6 @@ fn panic(_er: &PanicInfo) -> ! {
     gpio.output_val().set_pin22(1);
     loop {}
 }
+
+#[no_mangle]
+pub fn trap_handler() {}
