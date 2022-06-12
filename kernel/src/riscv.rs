@@ -13,6 +13,8 @@ static mut MSTATUS: usize = 0;
 static mut MIE: usize = 0;
 #[link_section = ".bss"]
 static mut MCAUSE: usize = 0;
+#[link_section = ".bss"]
+static mut MEPC: usize = 0;
 
 #[field(mie, 3, 3)]
 #[field(mpie, 7, 7)]
@@ -80,5 +82,19 @@ impl MCause {
     pub fn reload(&mut self) {
         unsafe { asm!("csrr {m}, mcause", m = out(reg) MCAUSE) };
     }
+}
 
+#[field(all, 0, 31)]
+pub struct Mepc(*mut usize);
+
+impl Mepc {
+    pub fn new() -> Self {
+        let mut pc = unsafe { Mepc(&mut MEPC) };
+        pc.reload();
+        pc
+    }
+
+    pub fn reload(&mut self) {
+        unsafe { asm!("csrr {m}, mepc", m = out(reg) MEPC) };
+    }
 }

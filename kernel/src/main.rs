@@ -17,7 +17,7 @@ use drivers::gpio::*;
 use drivers::prci::*;
 use drivers::uart::*;
 use hifive::*;
-use riscv::{wfi, MCause, MStatus, Mie};
+use riscv::{wfi, MCause, MStatus, Mepc, Mie};
 use term::Writer;
 
 #[no_mangle]
@@ -29,11 +29,9 @@ pub fn _start() {
     gpio.out_xor().set_all(LED_GREEN | LED_RED | LED_BLUE);
 
     setup_clock();
-    let prci = PRCI::new(PRCI_ADDR);
     let uart = setup_uart0();
     let mut writer = Writer::new(uart);
 
-    writeln!(writer, "Hfrosc enabled: {}", prci.hfrosccfg().hfroscen()).unwrap();
     enable_interrupts();
 
     // Turn on the green led
@@ -112,6 +110,15 @@ fn panic(_er: &PanicInfo) -> ! {
     loop {}
 }
 
+#[derive(Debug)]
+#[allow(dead_code)]
+struct Interrupt {
+    time: u64,
+    exception: bool,
+    code: usize,
+    pc: usize,
+}
+
 #[no_mangle]
 pub fn trap_handler() {
     let mcause = MCause::new();
@@ -129,6 +136,15 @@ pub fn trap_handler() {
         return;
     }
 
+    let i = Interrupt {
+        time,
+        exception: mcause.interrupt() != 1,
+        code: mcause.code(),
+        pc: Mepc::new().all(),
+    };
+
+    writeln!(writer, "Exception:\n{:?}", i).unwrap();
+
     // HALT on Exceptions
     if mcause.interrupt() == 0 {
         // Turn on the red led
@@ -138,14 +154,4 @@ pub fn trap_handler() {
         // TODO HALT / Recover
         loop {}
     }
-
-    writeln!(
-        writer,
-        "time: {} - interrupt: {:b} - code: {} - all: {:b}",
-        time,
-        mcause.interrupt(),
-        mcause.code(),
-        mcause.all()
-    )
-    .unwrap();
 }
