@@ -9,20 +9,21 @@ mod low;
 mod macros;
 mod riscv;
 mod term;
+mod trap;
 
 use core::panic::PanicInfo;
-use drivers::clint::*;
 use drivers::gpio::*;
 use drivers::prci::*;
 use hifive::*;
-use riscv::{wfi, MCause, MStatus, Mepc, Mie};
+use riscv::wfi;
 use term::{init_term};
+use trap::init_traps;
 
 #[no_mangle]
 pub fn _start() {
 
     setup_clock();
-    enable_interrupts();
+    init_traps();
     init_term();
 
     let gpio = GPIO::new(GPIO_ADDR);
@@ -38,21 +39,6 @@ pub fn _start() {
     loop {
         wfi();
     }
-}
-
-pub fn enable_interrupts() {
-    let mut mstatus = MStatus::new();
-    let mut mie = Mie::new();
-
-    mie.set_mtie(1);
-    mstatus.set_mie(1);
-
-    mie.apply();
-    mstatus.apply();
-
-    let clint = Clint::new(CLINT_ADDR);
-    // Triggers the first timer interrupt in 1s.
-    clint.mtimecmp().set_time(32_768);
 }
 
 pub fn setup_clock() {
@@ -74,49 +60,4 @@ fn panic(_er: &PanicInfo) -> ! {
     // Turn on the red led
     gpio.output_val().set_pin22(1);
     loop {}
-}
-
-#[derive(Debug)]
-#[allow(dead_code)]
-struct Interrupt {
-    time: u64,
-    exception: bool,
-    code: usize,
-    pc: usize,
-}
-
-#[no_mangle]
-pub fn trap_handler() {
-    let mcause = MCause::new();
-    let clint = Clint::new(CLINT_ADDR);
-    let time: u64 = clint.mtime().get_time();
-
-    // Timer Interrupt
-    if mcause.code() as u32 == 7 {
-        print!(".");
-        // Trigger an interrupt in 1s if the clock runs at 32.768KHz
-        // For some reason looks like this is using the AON block low freq clock, I still don't understand why its not using hf clock.
-        // TODO: What clock is actually running the CPU?
-        clint.mtimecmp().set_time(time + 32_768);
-        return;
-    }
-
-    let i = Interrupt {
-        time,
-        exception: mcause.interrupt() != 1,
-        code: mcause.code(),
-        pc: Mepc::new().all(),
-    };
-
-    println!("Exception:\n{:?}", i);
-
-    // HALT on Exceptions
-    if mcause.interrupt() == 0 {
-        // Turn on the red led
-        let gpio = GPIO::new(GPIO_ADDR);
-        gpio.output_val().set_all(0 | LED_RED);
-        println!("HALTED!");
-        // TODO HALT / Recover
-        loop {}
-    }
 }
