@@ -10,19 +10,21 @@ mod macros;
 mod riscv;
 mod term;
 mod trap;
+mod clock;
 
 use core::panic::PanicInfo;
 use drivers::gpio::*;
-use drivers::prci::*;
 use hifive::*;
 use riscv::wfi;
 use term::{init_term};
 use trap::init_traps;
+use clock::init_clock;
 
 #[no_mangle]
 pub fn _start() {
 
-    setup_clock();
+    let coreclk_freq = 2_073_600;
+    init_clock(coreclk_freq);
     init_traps();
     init_term();
 
@@ -38,19 +40,6 @@ pub fn _start() {
     println!("\nKernel initialised");
     loop {
         wfi();
-    }
-}
-
-pub fn setup_clock() {
-    let prci = PRCI::new(PRCI_ADDR);
-    // Set frequency to 2.0736MHz
-    prci.hfrosccfg().set_freq(2_073_600);
-
-    // Wait for the clock to be ready
-    loop {
-        if prci.hfrosccfg().hfroscrdy() == 1 {
-            break;
-        }
     }
 }
 

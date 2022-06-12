@@ -1,5 +1,6 @@
 use crate::drivers::{gpio::*, uart::*};
 use crate::hifive::*;
+use crate::clock::get_clock;
 use core::fmt;
 
 // TODO: Use a Mutex here
@@ -40,7 +41,7 @@ fn setup_uart() -> UART {
     uart.txctrl().set_txen(1);
     uart.rxctrl().set_rxen(1);
     // 115200 Baud from  a 2.0736MHz clock
-    uart.div().set_div(2_073_600 / 115200 - 1);
+    uart.div().set_div(get_clock().get_coreclk_out() as usize / 115200 - 1);
     uart
 }
 

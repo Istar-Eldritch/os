@@ -4,7 +4,7 @@ use crate::riscv::*;
 use crate::hifive::*;
 use crate::{print, println};
 use crate::drivers::gpio::*;
-
+use crate::clock::get_clock;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -27,7 +27,7 @@ pub fn init_traps() {
 
     let clint = Clint::new(CLINT_ADDR);
     // Triggers the first timer interrupt in 1s.
-    clint.mtimecmp().set_time(32_768);
+    clint.mtimecmp().set_time(get_clock().get_rtc_out() as u64);
 }
 
 #[no_mangle]
