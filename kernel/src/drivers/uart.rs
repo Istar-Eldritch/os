@@ -7,6 +7,7 @@ use register::*;
 #[register(ie, InterruptRegister, 0x10)]
 #[register(ip, InterruptRegister, 0x14)]
 #[register(div, DIV, 0x18)]
+#[derive(Clone)]
 pub struct UART(*mut usize);
 
 impl UART {
