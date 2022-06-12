@@ -5,6 +5,7 @@ use crate::hifive::*;
 use crate::{print, println};
 use crate::drivers::gpio::*;
 use crate::clock::get_clock;
+use crate::leds::{get_leds};
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -57,9 +58,10 @@ pub fn trap_handler() {
 
     // HALT on Exceptions
     if mcause.interrupt() == 0 {
-        // Turn on the red led
-        let gpio = GPIO::new(GPIO_ADDR);
-        gpio.output_val().set_all(0 | LED_RED);
+        let mut leds = get_leds();
+        leds.set_green(false);
+        leds.set_blue(false);
+        leds.set_red(true);
         println!("HALTED!");
         // TODO HALT / Recover
         loop {}
