@@ -8,30 +8,25 @@ mod hifive;
 mod low;
 mod macros;
 mod riscv;
-mod term;
 mod trap;
-mod clock;
-mod leds;
+mod devices;
 
 use core::panic::PanicInfo;
 use riscv::wfi;
-use term::{init_term};
 use trap::init_traps;
-use clock::init_clock;
-use leds::{init_leds, get_leds};
+use devices::Devices;
 
 #[no_mangle]
 pub fn _start() {
+    unsafe {
+        Devices::init();
+    }
 
-    let coreclk_freq = 2_073_600;
-    init_clock(coreclk_freq);
-    init_leds();
     init_traps();
-    init_term();
 
     
-    let mut leds = get_leds();
-    leds.set_green(true);
+    let d = Devices::get();
+    d.leds.set_green(true);
 
     println!("\nKernel initialised");
 
@@ -42,10 +37,10 @@ pub fn _start() {
 
 #[panic_handler]
 fn panic(er: &PanicInfo) -> ! {
-    let mut leds = get_leds();
+    let d = Devices::get();
     println!("Panic!: \n{:?}", er);
-    leds.set_green(false);
-    leds.set_blue(false);
-    leds.set_red(true);
+    d.leds.set_green(false);
+    d.leds.set_blue(false);
+    d.leds.set_red(true);
     loop {}
 }

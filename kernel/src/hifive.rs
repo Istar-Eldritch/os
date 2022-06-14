@@ -30,4 +30,5 @@ pub const OTP_TRIM: u32 = 0x7fb;
 
 //const FAC_CAL_ADDR: u32 = 2043;
 
-pub const CLINT_ADDR: *mut usize = 0x2000000 as *mut usize;
+pub const CLINT_ADDR: *mut usize = 0x0200_0000 as *mut usize;
+pub const PLIC_ADDR: *mut usize = 0x0C00_0000 as *mut usize;

@@ -40,14 +40,14 @@ pub fn field(args: TokenStream, input: TokenStream) -> TokenStream {
         impl #struct_name {
             pub fn #field_name(&self) -> usize {
                 use core::ptr::read_volatile;
-                ((unsafe { read_volatile(self.0)}) & #mask) >> #field_from
+                ((unsafe { read_volatile(self.addr)}) & #mask) >> #field_from
             }
             pub fn #set_field_name(&mut self, value: usize) {
                 use core::ptr::{read_volatile, write_volatile};
                 unsafe {
-                  let original = read_volatile(self.0) & !#mask;
+                  let original = read_volatile(self.addr) & !#mask;
                   let value = value << #field_from;
-                  write_volatile(self.0, original | value);
+                  write_volatile(self.addr, original | value);
                 }
             }
         }
@@ -93,8 +93,8 @@ pub fn register(args: TokenStream, input: TokenStream) -> TokenStream {
             pub fn #reg_name(&self) -> #reg_type {
                 use core::mem::transmute;
                 unsafe {
-                    let ptr = (self.0 as usize + #reg_offset) as *mut usize;
-                    #reg_type(ptr)
+                    let addr = (self.addr as usize + #reg_offset) as *mut usize;
+                    #reg_type{addr}
                 }
             }
         }

@@ -2,16 +2,18 @@
 
 use register::*;
 
-#[register(hfrosccfg, HFROSCCFG, 0x0)]
-#[register(hfxosccfg, HFXOSCCFG, 0x4)]
-#[register(pllcfg, PLLCFG, 0x8)]
-#[register(plloutdiv, PLLOUTDIV, 0xC)]
-#[register(procmoncfg, PROCMONCFG, 0xF0)]
-pub struct PRCI(*mut usize);
+#[register(hfrosccfg, HfroscCfg, 0x0)]
+#[register(hfxosccfg, HfxoscCfg, 0x4)]
+#[register(pllcfg, PllCfg, 0x8)]
+#[register(plloutdiv, PlloutDiv, 0xC)]
+#[register(procmoncfg, ProcMonCfg, 0xF0)]
+pub struct Prci {
+    addr: *mut usize,
+}
 
-impl PRCI {
+impl Prci {
     pub fn new(addr: *mut usize) -> Self {
-        PRCI(addr)
+        Prci { addr }
     }
 }
 
@@ -20,17 +22,15 @@ impl PRCI {
 #[field(hfrosctrim, 16, 20)]
 #[field(hfroscen, 30, 30)]
 #[field(hfroscrdy, 31, 31)]
-pub struct HFROSCCFG(*mut usize);
+pub struct HfroscCfg {
+    addr: *mut usize,
+}
 
-impl HFROSCCFG {
+impl HfroscCfg {
     const FREQ: u32 = 72_000_000;
 
-    pub fn new(ptr: *mut usize) -> Self {
-        HFROSCCFG(ptr)
-    }
-
     pub fn set_freq(&mut self, freq: u32) {
-        let div = HFROSCCFG::FREQ / freq;
+        let div = HfroscCfg::FREQ / freq;
 
         // TODO: Calibration should be read from the OTP
         // TODO: Test this with an oscilloscope
@@ -43,12 +43,8 @@ impl HFROSCCFG {
 /// External 16 MHz Crystal Oscillator (HFXOSC)
 #[field(hfxoscen, 30, 30)]
 #[field(hfxoscrdy, 31, 31)]
-pub struct HFXOSCCFG(*mut usize);
-
-impl HFXOSCCFG {
-    pub fn new(ptr: *mut usize) -> Self {
-        HFXOSCCFG(ptr)
-    }
+pub struct HfxoscCfg {
+    addr: *mut usize,
 }
 
 /// Internal High-Frequency PLL (HFPLL)
@@ -59,30 +55,18 @@ impl HFXOSCCFG {
 #[field(pllrefsel, 17, 17)]
 #[field(pllbypass, 18, 18)]
 #[field(plllock, 31, 31)]
-pub struct PLLCFG(*mut usize);
-
-impl PLLCFG {
-    pub fn new(ptr: *mut usize) -> Self {
-        PLLCFG(ptr)
-    }
+pub struct PllCfg {
+    addr: *mut usize,
 }
 
 /// PLL Output Divider
 #[field(plloutdiv, 0, 5)]
 #[field(plloutdivby1, 8, 8)]
-pub struct PLLOUTDIV(*mut usize);
-
-impl PLLOUTDIV {
-    pub fn new(ptr: *mut usize) -> Self {
-        PLLOUTDIV(ptr)
-    }
+pub struct PlloutDiv {
+    addr: *mut usize,
 }
 
 #[field(all, 0, 31)]
-pub struct PROCMONCFG(*mut usize);
-
-impl PROCMONCFG {
-    pub fn new(ptr: *mut usize) -> Self {
-        PROCMONCFG(ptr)
-    }
+pub struct ProcMonCfg {
+    addr: *mut usize,
 }

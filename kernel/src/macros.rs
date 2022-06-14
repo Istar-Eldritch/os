@@ -6,3 +6,18 @@ macro_rules! bit {
         $((2 as usize).pow($x))*
     };
 }
+
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => (
+        use core::fmt::Write;
+        $crate::devices::Devices::get().tty.write_fmt(format_args!($($arg)*)).unwrap()
+    )
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::term::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n",format_args!($($arg)*)))
+}

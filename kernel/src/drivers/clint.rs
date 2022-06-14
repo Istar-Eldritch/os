@@ -5,20 +5,26 @@ use register::*;
 #[register(msip, Msip, 0)]
 #[register(mtimecmp, MTime, 0x4000)]
 #[register(mtime, MTime, 0xbff8)]
-pub struct Clint(*mut usize);
+pub struct Clint {
+    addr: *mut usize,
+}
 
 impl Clint {
     pub fn new(addr: *mut usize) -> Self {
-        Clint(addr)
+        Clint { addr }
     }
 }
 
 #[field(all, 0, 31)]
-pub struct Msip(*mut usize);
+pub struct Msip {
+    addr: *mut usize,
+}
 
 #[register(low, Time, 0)]
 #[register(high, Time, 0x4)]
-pub struct MTime(*mut usize);
+pub struct MTime {
+    addr: *mut usize,
+}
 
 impl MTime {
     pub fn get_time(&self) -> u64 {
@@ -38,4 +44,6 @@ impl From<&MTime> for u64 {
 }
 
 #[field(all, 0, 31)]
-pub struct Time(*mut usize);
+pub struct Time {
+    addr: *mut usize,
+}

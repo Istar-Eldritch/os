@@ -20,12 +20,12 @@ static mut MEPC: usize = 0;
 #[field(mpie, 7, 7)]
 #[field(mpp, 11, 12)]
 #[field(all, 0, 31)]
-pub struct MStatus(*mut usize);
+pub struct MStatus{ addr: *mut usize }
 
 impl MStatus {
     pub fn new() -> Self {
         unsafe {
-            let mut mstatus = MStatus(&mut MSTATUS);
+            let mut mstatus = MStatus { addr: &mut MSTATUS };
             mstatus.reload();
             mstatus
         }
@@ -45,12 +45,12 @@ impl MStatus {
 #[field(msie, 3, 3)]
 #[field(mtie, 7, 7)]
 #[field(meie, 11, 11)]
-pub struct Mie(*mut usize);
+pub struct Mie{ addr: *mut usize }
 
 impl Mie {
     pub fn new() -> Self {
         unsafe {
-            let mut mie = Mie(&mut MIE);
+            let mut mie = Mie{ addr: &mut MIE } ;
             mie.reload();
             mie
         }
@@ -70,11 +70,11 @@ impl Mie {
 #[field(code, 0, 9)]
 #[field(interrupt, 31, 31)]
 #[field(all, 0, 31)]
-pub struct MCause(*mut usize);
+pub struct MCause{ addr: *mut usize}
 
 impl MCause {
     pub fn new() -> Self {
-        let mut mcause = unsafe { MCause(&mut MCAUSE) };
+        let mut mcause = unsafe { MCause { addr: &mut MCAUSE} };
         mcause.reload();
         mcause
     }
@@ -85,11 +85,11 @@ impl MCause {
 }
 
 #[field(all, 0, 31)]
-pub struct Mepc(*mut usize);
+pub struct Mepc{ addr: *mut usize }
 
 impl Mepc {
     pub fn new() -> Self {
-        let mut pc = unsafe { Mepc(&mut MEPC) };
+        let mut pc = unsafe { Mepc{ addr: &mut MEPC} };
         pc.reload();
         pc
     }

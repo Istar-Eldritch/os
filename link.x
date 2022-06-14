@@ -4,17 +4,21 @@ ENTRY(_start)
 
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x20000000, LENGTH = 60K 
-  RAM (rw) : ORIGIN = 0x80000000, LENGTH = 0x4000
+  ROM (rx) : ORIGIN = 0x20000000, LENGTH = 60K 
+  RAM (rw) : ORIGIN = 0x80000000, LENGTH = 16K
 }
 
 SECTIONS
 {
-  .init : { *(.init) } > FLASH
-  .trap : ALIGN(4) { *(.trap) } > FLASH
-  .text : { *(.text) } > FLASH
-  .bss : { *(.data)  } > RAM
-  .rodata : { *(.rodata)  } > FLASH
+  .init : { *(.init); } > ROM
+  .rodata : { *(.rodata); } > ROM
+  .text : { *(.text.*); } > ROM
+  .trap : { *(.trap); } > ROM
+
+  .data (NOLOAD): { *(.data.*); } > RAM
+  .sdata (NOLOAD) : { *(.sdata); } > RAM
+  .bss (NOLOAD) : { *(.bss); } > RAM
+
 }
 
 PROVIDE(_hart_stack_size = 2K);

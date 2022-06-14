@@ -3,9 +3,7 @@ use crate::drivers::clint::*;
 use crate::riscv::*;
 use crate::hifive::*;
 use crate::{print, println};
-use crate::drivers::gpio::*;
-use crate::clock::get_clock;
-use crate::leds::{get_leds};
+use crate::devices::Devices;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -28,7 +26,7 @@ pub fn init_traps() {
 
     let clint = Clint::new(CLINT_ADDR);
     // Triggers the first timer interrupt in 1s.
-    clint.mtimecmp().set_time(get_clock().get_rtc_out() as u64);
+    clint.mtimecmp().set_time(Devices::get().clock.get_rtc_out() as u64);
 }
 
 #[no_mangle]
@@ -58,10 +56,10 @@ pub fn trap_handler() {
 
     // HALT on Exceptions
     if mcause.interrupt() == 0 {
-        let mut leds = get_leds();
-        leds.set_green(false);
-        leds.set_blue(false);
-        leds.set_red(true);
+        let d = Devices::get();
+        d.leds.set_green(false);
+        d.leds.set_blue(false);
+        d.leds.set_red(true);
         println!("HALTED!");
         // TODO HALT / Recover
         loop {}

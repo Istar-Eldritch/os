@@ -1,7 +1,7 @@
-use crate::drivers::{gpio::*, uart::*};
 use crate::hifive::*;
-use crate::clock::get_clock;
+use crate::clock::Clock;
 use core::fmt;
+use crate::devices::*;
 
 // TODO: Use a Mutex here
 static mut WRITER: Option<Writer> = None;
@@ -24,43 +24,41 @@ pub fn _print(s: fmt::Arguments) {
     }
 }
 
-pub fn init_term() {
-    let uart = setup_uart();
+pub fn init() {
     unsafe {
-        WRITER = Some(Writer::new(uart));
+        WRITER = Some(Writer::new());
     }
 }
 
-fn setup_uart() -> UART {
+fn setup_uart() {
     // Enble UART GPIOs
-    let gpio = GPIO::new(GPIO_ADDR);
+    let gpio = unsafe {GPIO.as_mut()}.unwrap();
     gpio.iof_en().set_all(UART0_PIN_RX | UART0_PIN_TX);
     gpio.iof_sel().set_all(0x0);
 
-    let uart = UART::new(UART0_ADDR);
+    let uart = unsafe {UART0.as_mut()}.unwrap();
     uart.txctrl().set_txen(1);
     uart.rxctrl().set_rxen(1);
     // 115200 Baud from  a 2.0736MHz clock
-    uart.div().set_div(get_clock().get_coreclk_out() as usize / 115200 - 1);
-    uart
+    uart.div().set_div(Clock::get().get_coreclk_out() as usize / 115200 - 1);
 }
 
 #[derive(Clone)]
 struct Writer {
-    uart: UART,
 }
 
 impl Writer {
-    pub fn new(uart: UART) -> Self {
-        Writer { uart }
+    pub fn new() -> Self {
+        Writer { }
     }
     pub fn write_char(&mut self, c: u8) {
+        let uart = unsafe {UART0.as_mut()}.unwrap();
         loop {
-            if self.uart.txdata().full() == 0 {
+            if uart.txdata().full() == 0 {
                 break;
             }
         }
-        self.uart.txdata().set_data(c as usize);
+        uart.txdata().set_data(c as usize);
     }
 
     pub fn write_string(&mut self, s: &str) {
