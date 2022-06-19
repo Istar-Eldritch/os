@@ -1,5 +1,7 @@
 use crate::devices::*;
 use core::fmt;
+use crate::drivers::plic::*;
+use crate::riscv::*;
 
 // TODO: Make this use a generic writer once we have an allocator
 pub struct Tty {
@@ -14,6 +16,10 @@ impl Tty {
     pub fn print(&mut self, args: core::fmt::Arguments) {
         use core::fmt::Write;
         self.writer.write_fmt(args).unwrap()
+    }
+    
+    pub fn enable_interrupts(&self) {
+        self.writer.enable_interrupts();
     }
 }
 
@@ -59,6 +65,19 @@ impl UartWriter {
         self.uart
             .div()
             .set_div(clock.get_coreclk_out() as usize / 115200 - 1);
+    }
+    
+    pub fn enable_interrupts(&self) {
+        // Enable external interrupts (Defined in PLIC)
+        let mut mie = Mie::new();
+        mie.set_meie(1);
+        mie.apply();
+
+        let plic = Plic::new(PLIC_ADDR);
+        
+        // Enable and set priority of UART0
+        plic.enabled1().set_bit3(1);
+        plic.priority3().set_priority(5);
     }
 }
 

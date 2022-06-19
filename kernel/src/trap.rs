@@ -1,8 +1,8 @@
-use crate::drivers::clint::*;
+use crate::devices::Devices;
+use crate::drivers::{clint::*, plic::*};
 use crate::hifive::*;
 use crate::println;
 use crate::riscv::*;
-use crate::devices::Devices;
 
 static mut TRAP_MANAGER: Option<TrapManager> = None;
 
@@ -68,26 +68,36 @@ impl From<usize> for ExceptionCode {
 }
 
 pub struct TrapManager {
-    handlers: [Option<TrapHandler>; 31],
+    interrupt_handler: [Option<TrapHandler>; 12],
+    exception_handler: [Option<TrapHandler>; 12],
+    external_interrupt_handler: [Option<TrapHandler>; 53]
 }
 
 impl TrapManager {
     pub fn register_interrupt_handler(&mut self, code: InterruptCode, handler: TrapHandler) {
-        self.handlers[code as usize] = Some(handler);
+        self.interrupt_handler[code as usize] = Some(handler);
     }
 
     //TODO: Should we use the trap manager only for interrupts?
     #[allow(dead_code)]
     pub fn register_exception_handler(&mut self, code: ExceptionCode, handler: TrapHandler) {
-        self.handlers[code as usize + 15] = Some(handler);
+        self.exception_handler[code as usize] = Some(handler);
     }
 
+    pub fn register_external_interrupt_handler(&mut self, code: u8, handler: TrapHandler) {
+        self.external_interrupt_handler[code as usize] = Some(handler)
+    }
+    
     pub fn get_interrupt_handler(&self, code: InterruptCode) -> &Option<TrapHandler> {
-        &self.handlers[code as usize]
+        &self.interrupt_handler[code as usize]
     }
 
     pub fn get_exception_handler(&self, code: ExceptionCode) -> &Option<TrapHandler> {
-        &self.handlers[code as usize + 15]
+        &self.exception_handler[code as usize]
+    }
+
+    pub fn get_external_interrupt_handler(&self, code: u8) -> &Option<TrapHandler> {
+        &self.external_interrupt_handler[code as usize]
     }
 
     pub fn get<'a>() -> &'a Self {
@@ -99,9 +109,24 @@ impl TrapManager {
     }
 
     pub unsafe fn init() {
-        TRAP_MANAGER = Some(TrapManager {
-            handlers: [None; 31],
-        })
+        let mut trap_manager = TrapManager {
+            interrupt_handler: [None; 12],
+            exception_handler: [None; 12],
+            external_interrupt_handler: [None; 53],
+
+        };
+
+        trap_manager.register_interrupt_handler(InterruptCode::MachineExternalInterrupt, |v| {
+            let plic = Plic::new(PLIC_ADDR);
+            let external_interrupt = plic.claim().all() as u8;
+            if let Some(handler) = TrapManager::get().get_external_interrupt_handler(external_interrupt) {
+                handler(v);
+            } else {
+                println!("\n\rExternal interrupt {} not handled: {:?}", external_interrupt, v);
+            }
+        });
+
+        TRAP_MANAGER = Some(trap_manager)
     }
 }
 
@@ -123,7 +148,7 @@ pub fn trap_handler() {
         if let Some(handler) = TrapManager::get().get_interrupt_handler(code) {
             handler(&i)
         } else {
-            println!("Interrupt Not handled: {:?}", i);
+            println!("\n\rInterrupt Not handled: {:?}", i);
         }
     } else {
         let code: ExceptionCode = mcause.code().into();
@@ -134,7 +159,7 @@ pub fn trap_handler() {
             d.leds.set_green(false);
             d.leds.set_blue(false);
             d.leds.set_red(true);
-            println!("Exception not handled: {:?}\n\rHALTED!", i);
+            println!("\n\rException not handled: {:?}\n\rHALTED!", i);
             // TODO HALT / Recover
             loop {}
         }
