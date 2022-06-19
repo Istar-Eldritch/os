@@ -13,7 +13,8 @@ SECTIONS
   .init : { *(.init); } > ROM
   .rodata : { *(.rodata); } > ROM
   .text : { *(.text.*); } > ROM
-  .trap : { *(.trap); } > ROM
+  .trap : ALIGN(4) { *(.trap); } > ROM
+
 
   .data (NOLOAD): { *(.data.*); } > RAM
   .sdata (NOLOAD) : { *(.sdata); } > RAM

@@ -1,4 +1,4 @@
-mod clock;
+pub mod clock;
 mod leds;
 mod tty;
 
@@ -19,7 +19,7 @@ pub struct Devices {
 impl Devices {
     pub unsafe fn init() {
         let core_clk: u32 = 2_073_600;
-        let rtc: u32 = 32_000;
+        let rtc: u32 = 30_000;
         // Setting up the kernel clock
         let mut clock = Clock::new(core_clk, rtc);
         clock.init();

@@ -10,6 +10,11 @@ impl Tty {
     pub fn new(writer: UartWriter) -> Tty {
         Tty { writer }
     }
+
+    pub fn print(&mut self, args: core::fmt::Arguments) {
+        use core::fmt::Write;
+        self.writer.write_fmt(args).unwrap()
+    }
 }
 
 impl fmt::Write for Tty {
@@ -51,7 +56,8 @@ impl UartWriter {
         self.uart.txctrl().set_txen(1);
         self.uart.rxctrl().set_rxen(1);
         // 115200 Baud from the coreclock
-        self.uart.div()
+        self.uart
+            .div()
             .set_div(clock.get_coreclk_out() as usize / 115200 - 1);
     }
 }

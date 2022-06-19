@@ -3,33 +3,33 @@
 #![feature(naked_functions)]
 #![feature(const_mut_refs)]
 
+mod devices;
 mod drivers;
 mod hifive;
 mod low;
 mod macros;
 mod riscv;
 mod trap;
-mod devices;
 
 use core::panic::PanicInfo;
-use riscv::wfi;
-use trap::init_traps;
 use devices::Devices;
+use riscv::*;
+use trap::TrapManager;
 
 #[no_mangle]
 pub fn _start() {
     unsafe {
+        TrapManager::init();
         Devices::init();
     }
-
-    init_traps();
-
     
     let d = Devices::get();
+    d.clock.enable_timer_interrupt();
+
     d.leds.set_green(true);
 
-    println!("\nKernel initialised");
-
+    println!("\n\rKernel initialised");
+  
     loop {
         wfi();
     }

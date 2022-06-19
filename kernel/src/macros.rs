@@ -11,13 +11,12 @@ macro_rules! bit {
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => (
-        use core::fmt::Write;
-        $crate::devices::Devices::get().tty.write_fmt(format_args!($($arg)*)).unwrap()
+        $crate::devices::Devices::get().tty.print(format_args!($($arg)*))
     )
 }
 
 #[macro_export]
 macro_rules! println {
-    () => ($crate::term::print!("\n"));
-    ($($arg:tt)*) => ($crate::print!("{}\n",format_args!($($arg)*)))
+    () => ($crate::term::print!("\n\r"));
+    ($($arg:tt)*) => ($crate::print!("{}\n\r",format_args!($($arg)*)))
 }
