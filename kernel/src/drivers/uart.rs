@@ -27,6 +27,7 @@ pub struct TxData {
 
 #[field(data, 0, 7)]
 #[field[empty, 31, 31]]
+#[field(all, 0, 31)]
 pub struct RxData {
     addr: *mut usize,
 }

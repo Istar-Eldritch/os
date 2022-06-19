@@ -1,7 +1,9 @@
 use crate::devices::*;
-use core::fmt;
 use crate::drivers::plic::*;
 use crate::riscv::*;
+use crate::trap::*;
+use crate::{bit, print, println};
+use core::fmt;
 
 // TODO: Make this use a generic writer once we have an allocator
 pub struct Tty {
@@ -17,7 +19,7 @@ impl Tty {
         use core::fmt::Write;
         self.writer.write_fmt(args).unwrap()
     }
-    
+
     pub fn enable_interrupts(&self) {
         self.writer.enable_interrupts();
     }
@@ -48,6 +50,7 @@ impl UartWriter {
     }
 
     pub fn write_string(&mut self, s: &str) {
+        // TODO Use buffer & tx interrupt to avoid blocking
         for byte in s.bytes() {
             self.write_char(byte);
         }
@@ -66,18 +69,41 @@ impl UartWriter {
             .div()
             .set_div(clock.get_coreclk_out() as usize / 115200 - 1);
     }
-    
+
     pub fn enable_interrupts(&self) {
         // Enable external interrupts (Defined in PLIC)
+        TrapManager::get_mut().register_external_interrupt_handler(3, |_| {
+            let plic = Plic::new(PLIC_ADDR);
+            let uart = Uart::new(UART0_ADDR);
+
+            // Check the interrupt is the receive one
+            if uart.ip().rxwm() == 1 {
+                loop {
+                    let all = uart.rxdata().all();
+                    let empty = (all & bit!(31)) >> 31;
+                    if empty == 1 {
+                        break;
+                    }
+
+                    //TODO UTF-8 support
+                    // TODO provide a shell.
+                    let data = all & !bit!(31);
+                    print!("{}", char::from_u32(data as u32).unwrap());
+                }
+            }
+            plic.claim().set_all(3);
+        });
         let mut mie = Mie::new();
         mie.set_meie(1);
         mie.apply();
 
         let plic = Plic::new(PLIC_ADDR);
-        
+
         // Enable and set priority of UART0
         plic.enabled1().set_bit3(1);
         plic.priority3().set_priority(5);
+        self.uart.ie().set_rxwm(1);
+        self.uart.ie().set_txwm(1);
     }
 }
 
