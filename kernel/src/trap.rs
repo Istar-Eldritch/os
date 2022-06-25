@@ -13,6 +13,7 @@ pub struct InterruptEvent {
     exception: bool,
     code: usize,
     pc: usize,
+    val: usize,
 }
 
 pub type TrapHandler = fn(e: &InterruptEvent) -> ();
@@ -70,7 +71,7 @@ impl From<usize> for ExceptionCode {
 pub struct TrapManager {
     interrupt_handler: [Option<TrapHandler>; 12],
     exception_handler: [Option<TrapHandler>; 12],
-    external_interrupt_handler: [Option<TrapHandler>; 53]
+    external_interrupt_handler: [Option<TrapHandler>; 53],
 }
 
 impl TrapManager {
@@ -87,7 +88,7 @@ impl TrapManager {
     pub fn register_external_interrupt_handler(&mut self, code: u8, handler: TrapHandler) {
         self.external_interrupt_handler[code as usize] = Some(handler)
     }
-    
+
     pub fn get_interrupt_handler(&self, code: InterruptCode) -> &Option<TrapHandler> {
         &self.interrupt_handler[code as usize]
     }
@@ -113,16 +114,20 @@ impl TrapManager {
             interrupt_handler: [None; 12],
             exception_handler: [None; 12],
             external_interrupt_handler: [None; 53],
-
         };
 
         trap_manager.register_interrupt_handler(InterruptCode::MachineExternalInterrupt, |v| {
             let plic = Plic::new(PLIC_ADDR);
             let external_interrupt = plic.claim().all() as u8;
-            if let Some(handler) = TrapManager::get().get_external_interrupt_handler(external_interrupt) {
+            if let Some(handler) =
+                TrapManager::get().get_external_interrupt_handler(external_interrupt)
+            {
                 handler(v);
             } else {
-                println!("\n\rExternal interrupt {} not handled: {:?}", external_interrupt, v);
+                println!(
+                    "\n\rExternal interrupt {} not handled: {:?}",
+                    external_interrupt, v
+                );
             }
         });
 
@@ -141,6 +146,7 @@ pub fn trap_handler() {
         exception: mcause.interrupt() != 1,
         code: mcause.code(),
         pc: Mepc::new().all(),
+        val: Mtval::new().all(),
     };
 
     if mcause.interrupt() == 1 {
