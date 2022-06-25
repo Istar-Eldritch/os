@@ -2,7 +2,7 @@ use crate::devices::*;
 use crate::drivers::plic::*;
 use crate::riscv::*;
 use crate::trap::*;
-use crate::{bit, print, println};
+use crate::{bit, print};
 use core::fmt;
 
 // TODO: Make this use a generic writer once we have an allocator

@@ -135,8 +135,9 @@ impl TrapManager {
     }
 }
 
+// Machine level trap handler
 #[no_mangle]
-pub fn trap_handler() {
+pub fn m_trap_handler() {
     let mcause = MCause::new();
     let clint = Clint::new(CLINT_ADDR);
     let time: u64 = clint.mtime().get_time();
@@ -170,4 +171,10 @@ pub fn trap_handler() {
             loop {}
         }
     }
+}
+
+// Supervisor level trap handler
+#[no_mangle]
+pub fn s_trap_handler() {
+    // TODO: Implement this
 }

@@ -48,9 +48,10 @@ pub extern "C" fn _init() -> ! {
                 lui t0, %hi(_hart_stack_size)
                 add t0, t0, %lo(_hart_stack_size)
             
-                la t0, _start_trap
+                la t0, _m_trap
                 csrw mtvec, t0
-                jal zero, _start
+
+                j _start
     ",
             options(noreturn)
         )
@@ -61,13 +62,10 @@ pub extern "C" fn _init() -> ! {
 #[no_mangle]
 #[cfg(target_arch = "riscv32")]
 #[link_section = ".trap"]
-pub extern "C" fn _start_trap() -> ! {
+pub extern "C" fn _save_registers() -> ! {
     unsafe {
         asm!(
             "
-                addi sp, sp, -16*(1<<2)
-            
-                sw ra, 0*(1 << 2)(sp)
                 sw t0, 1*(1 << 2)(sp)
                 sw t1, 2*(1 << 2)(sp)
                 sw t2, 3*(1 << 2)(sp)
@@ -83,11 +81,21 @@ pub extern "C" fn _start_trap() -> ! {
                 sw a5, 13*(1 << 2)(sp)
                 sw a6, 14*(1 << 2)(sp)
                 sw a7, 15*(1 << 2)(sp)
-            
-                add a0, sp, zero
-                jal ra, trap_handler
-            
-                lw ra, 0*(1 << 2)(sp)
+                ret
+            ",
+            options(noreturn)
+        )
+    }
+}
+
+#[naked]
+#[no_mangle]
+#[cfg(target_arch = "riscv32")]
+#[link_section = ".trap"]
+pub extern "C" fn _recover_registers() -> ! {
+    unsafe {
+        asm!(
+            "
                 lw t0, 1*(1 << 2)(sp)
                 lw t1, 2*(1 << 2)(sp)
                 lw t2, 3*(1 << 2)(sp)
@@ -104,11 +112,35 @@ pub extern "C" fn _start_trap() -> ! {
                 lw a6, 14*(1 << 2)(sp)
                 lw a7, 15*(1 << 2)(sp)
             
-                addi sp, sp, 16*(1<<2)
-                mret         
+                ret
             ",
             options(noreturn)
         )
     }
 }
 
+#[naked]
+#[no_mangle]
+#[cfg(target_arch = "riscv32")]
+#[link_section = ".trap"]
+pub extern "C" fn _m_trap() -> ! {
+    unsafe {
+        asm!(
+            "
+                addi sp, sp, -16*(1<<2)
+                sw ra, 0*(1 << 2)(sp)
+
+                j _save_registers
+                add a0, sp, zero
+                jal ra, m_trap_handler
+                j _recover_registers
+
+                lw ra, 0*(1 << 2)(sp)
+                addi sp, sp, 16*(1<<2)
+
+                mret
+            ",
+            options(noreturn)
+        )
+    }
+}
