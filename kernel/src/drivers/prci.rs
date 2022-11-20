@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use register::*;
+use register_interface::*;
 
 #[register(hfrosccfg, HfroscCfg, 0x0)]
 #[register(hfxosccfg, HfxoscCfg, 0x4)]

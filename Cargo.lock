@@ -27,7 +27,7 @@ checksum = "dcb6dd1c2376d2e096796e234a70e17e94cc2d5d54ff8ce42b28cef1d0d359a4"
 name = "kernel"
 version = "0.1.0"
 dependencies = [
- "register",
+ "register-interface",
  "riscv-rt",
 ]
 
@@ -127,19 +127,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49b3de9ec5dc0a3417da371aab17d729997c15010e7fd24ff707773a33bddb64"
 
 [[package]]
-name = "register"
+name = "register-interface"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3f9f76913c57cfc2170ecc44f9a4238d59556bbcac040538d8ffc1fe6f07357"
 dependencies = [
  "proc-macro2 1.0.39",
  "quote 1.0.18",
  "syn 1.0.96",
-]
-
-[[package]]
-name = "register_test"
-version = "0.1.0"
-dependencies = [
- "register",
 ]
 
 [[package]]

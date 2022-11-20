@@ -1,5 +1,5 @@
 use core::arch::asm;
-use register::*;
+use register_interface::*;
 
 #[link_section = ".bss"]
 static mut MSTATUS: usize = 0;

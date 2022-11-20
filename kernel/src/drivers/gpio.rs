@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
-use register::*;
-
+use register_interface::*;
 
 #[register(in_val, PinRegister, 0x00)]
 #[register(in_en, PinRegister, 0x04)]

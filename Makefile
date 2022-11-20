@@ -1,6 +1,6 @@
 
 build:
-	cargo build --bin kernel --release
+	cargo build --target="riscv32imc-unknown-none-elf" --bin kernel
 
 kernel: build
 	riscv64-unknown-elf-objcopy -O binary target/riscv32imc-unknown-none-elf/release/kernel target/riscv32imc-unknown-none-elf/release/kernel.bin

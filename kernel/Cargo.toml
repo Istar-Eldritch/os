@@ -6,8 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+register-interface = "0.1.0"
 riscv-rt = "0.8.1"
 
-[dependencies.register]
-version = "0.1.0"
-path = "../register"

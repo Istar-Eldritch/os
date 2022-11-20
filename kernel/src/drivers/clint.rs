@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use register::*;
+use register_interface::*;
 
 #[register(msip, Msip, 0)]
 #[register(mtimecmp, MTime, 0x4000)]

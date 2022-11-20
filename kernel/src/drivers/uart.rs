@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use register::*;
+use register_interface::*;
 
 #[register(txdata, TxData, 0x0)]
 #[register(rxdata, RxData, 0x4)]

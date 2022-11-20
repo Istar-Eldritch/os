@@ -1,6 +1,5 @@
 #![allow(dead_code)]
-use register::*;
-
+use register_interface::*;
 
 #[register(priority1, PriorityReg, 4)]
 #[register(priority2, PriorityReg, 8)]
@@ -60,16 +59,20 @@ use register::*;
 #[register(enabled2, PositionalReg1, 0x2004)]
 #[register(threshold, BaseReg, 0x20_0000)]
 #[register(claim, BaseReg, 0x20_0004)]
-pub struct Plic{addr: *mut usize}
+pub struct Plic {
+    addr: *mut usize,
+}
 
 impl Plic {
     pub fn new(addr: *mut usize) -> Self {
-        Plic{addr}
+        Plic { addr }
     }
 }
 
 #[field(priority, 0, 2)]
-pub struct PriorityReg{addr: *mut usize}
+pub struct PriorityReg {
+    addr: *mut usize,
+}
 
 #[field(bit0, 0, 0)]
 #[field(bit1, 1, 1)]
@@ -104,7 +107,9 @@ pub struct PriorityReg{addr: *mut usize}
 #[field(bit30, 30, 30)]
 #[field(bit31, 31, 31)]
 #[field(all, 0, 31)]
-pub struct PositionalReg1{addr: *mut usize}
+pub struct PositionalReg1 {
+    addr: *mut usize,
+}
 
 #[field(bit32, 32, 32)]
 #[field(bit33, 33, 33)]
@@ -127,8 +132,12 @@ pub struct PositionalReg1{addr: *mut usize}
 #[field(bit50, 50, 50)]
 #[field(bit51, 51, 51)]
 #[field(bit52, 52, 52)]
-#[field(all, 0,31)]
-pub struct PositionalReg2{addr: *mut usize}
+#[field(all, 0, 31)]
+pub struct PositionalReg2 {
+    addr: *mut usize,
+}
 
 #[field(all, 0, 31)]
-pub struct BaseReg{addr: *mut usize}
+pub struct BaseReg {
+    addr: *mut usize,
+}

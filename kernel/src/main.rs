@@ -22,14 +22,14 @@ pub fn _start() {
         TrapManager::init();
         Devices::init();
     }
-    
+
     let d = Devices::get();
     d.clock.enable_timer_interrupt();
     d.tty.enable_interrupts();
     d.leds.set_green(true);
 
     println!("\n\rKernel initialised");
-  
+
     loop {
         wfi();
     }
